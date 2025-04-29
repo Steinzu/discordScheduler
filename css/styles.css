@@ -1,0 +1,116 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #36393f;
+    color: #dcddde;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #2f3136;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+h1, h2 {
+    color: #ffffff;
+}
+
+input, textarea, button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #202225;
+    background-color: #40444b;
+    color: #dcddde;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+button {
+    background-color: #7289da;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #677bc4;
+}
+
+.message-scheduler, .scheduled-messages {
+    margin-bottom: 30px;
+    padding: 15px;
+    background-color: #292b2f;
+    border-radius: 5px;
+}
+
+.message-item {
+    background-color: #40444b;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.message-content {
+    margin-bottom: 10px;
+}
+
+.message-schedule {
+    font-size: 0.9em;
+    color: #b9bbbe;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sent-badge {
+    background-color: #43b581;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+.message-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.delete-btn {
+    background-color: #ed4245;
+}
+
+.delete-btn:hover {
+    background-color: #c03537;
+}
+
+#status-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #2f3136;
+    display: none;
+}
+
+.status-active {
+    display: block !important;
+    border-left: 4px solid #43b581;
+}
+
+.status-error {
+    display: block !important;
+    border-left: 4px solid #ed4245;
+}

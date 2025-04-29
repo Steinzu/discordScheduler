@@ -1,0 +1,27 @@
+name: Send Scheduled Discord Messages
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Run every 10 minutes
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  send-messages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install axios
+
+      - name: Process scheduled messages
+        run: |
+          node .github/scripts/send-messages.js
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

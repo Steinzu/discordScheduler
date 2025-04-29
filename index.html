@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Webhook Scheduler</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Discord Webhook Scheduler</h1>
+        
+        <div class="message-scheduler">
+            <h2>Schedule Message</h2>
+            <textarea id="message-content" placeholder="Enter your message"></textarea>
+            <div class="schedule-controls">
+                <input type="datetime-local" id="schedule-time">
+                <button id="schedule-message">Schedule Message</button>
+            </div>
+        </div>
+
+        <div class="scheduled-messages">
+            <h2>Scheduled Messages</h2>
+            <div id="message-list"></div>
+        </div>
+    </div>
+
+    <div id="status-indicator"></div>
+    
+    <script src="js/webhook.js"></script>
+    <script src="js/github.js"></script>
+    <script src="js/scheduler.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
