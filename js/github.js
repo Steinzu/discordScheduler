@@ -91,11 +91,13 @@ class GitHubManager {
             console.log('Token length:', this.token.length);
             console.log('First few characters:', this.token.substring(0, 4) + '...');
             
-            // Check user info with mode: 'cors'
+            // Check user info with modified fetch options to prevent CORS issues
             const userResponse = await fetch('https://api.github.com/user', {
                 method: 'GET',
                 headers: headers,
-                mode: 'cors' // Add this line
+                mode: 'cors',
+                cache: 'no-cache', // Prevent cache-control header
+                credentials: 'omit' // Don't send cookies which can cause CORS issues
             });
             
             if (!userResponse.ok) {
@@ -105,9 +107,12 @@ class GitHubManager {
             this.userInfo = await userResponse.json();
             this.log('Token validated successfully', { username: this.userInfo.login });
             
-            // Check repo access
+            // Check repo access with the same fetch options
             const repoResponse = await fetch(`https://api.github.com/repos/${this.repo}`, {
-                headers: this.createHeaders()
+                headers: this.createHeaders(),
+                mode: 'cors',
+                cache: 'no-cache',
+                credentials: 'omit'
             });
             
             if (!repoResponse.ok) {
@@ -352,6 +357,15 @@ class GitHubManager {
         // Add mode: 'cors' if not present
         if (!options.mode) {
             options.mode = 'cors';
+        }
+        
+        // Add cache and credentials options to prevent CORS issues
+        if (!options.cache) {
+            options.cache = 'no-cache';
+        }
+        
+        if (!options.credentials) {
+            options.credentials = 'omit';
         }
         
         let lastError;
