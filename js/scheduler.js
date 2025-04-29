@@ -186,6 +186,7 @@ class MessageScheduler {
         }
         
         try {
+            // First refresh to get latest state from GitHub
             await this.refreshMessages();
             
             const now = new Date();
@@ -197,10 +198,30 @@ class MessageScheduler {
                 return;
             }
             
-            this.log(`Found ${messagesToSend.length} messages to send`);
+            // IMPORTANT FIX: Refresh messages again to make sure they weren't sent by GitHub Actions
+            // This prevents duplicate messages when browser reconnects after GitHub Actions already processed them
+            await this.refreshMessages();
+            
+            // Re-filter after refreshing to avoid duplicates
+            const stillExistingMessages = [];
+            for (const message of messagesToSend) {
+                // Check if message still exists after the refresh
+                if (this.messages.some(m => m.id === message.id)) {
+                    stillExistingMessages.push(message);
+                } else {
+                    this.log(`Message ${message.id} was already processed by GitHub Actions, skipping`);
+                }
+            }
+            
+            if (stillExistingMessages.length === 0) {
+                this.log('No messages to send after verification');
+                return;
+            }
+            
+            this.log(`Found ${stillExistingMessages.length} messages to send after verification`);
             let saveRequired = false;
             
-            for (const message of messagesToSend) {
+            for (const message of stillExistingMessages) {
                 try {
                     this.log(`Sending message: ${message.id}`);
                     await this.webhook.sendMessage(message.messageData);
