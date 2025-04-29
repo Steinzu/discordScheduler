@@ -83,6 +83,15 @@ class DiscordWebhook {
             // Advanced message object
             payload = content;
             
+            // Remove any timestamp from embeds to prevent "Today at XX:XX" display
+            if (payload.embeds && payload.embeds.length > 0) {
+                for (const embed of payload.embeds) {
+                    if (embed.timestamp) {
+                        delete embed.timestamp;
+                    }
+                }
+            }
+            
             // Validate that the message has content
             if (!payload.content?.trim() && 
                 (!payload.embeds || 

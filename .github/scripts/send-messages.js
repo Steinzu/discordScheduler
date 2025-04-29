@@ -46,6 +46,15 @@ async function sendMessage(message) {
     // Handle both old format (string content) and new format (messageData object)
     const payload = message.messageData || { content: message.content };
     
+    // Remove any timestamp from embeds to prevent "Today at XX:XX" display
+    if (payload.embeds && payload.embeds.length > 0) {
+      for (const embed of payload.embeds) {
+        if (embed.timestamp) {
+          delete embed.timestamp;
+        }
+      }
+    }
+    
     // Validate that there's actual content
     if (!payload.content?.trim() && 
         (!payload.embeds || 
