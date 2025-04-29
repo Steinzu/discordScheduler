@@ -30,17 +30,42 @@ class GitHubManager {
     async setToken(token) {
         if (!token) return false;
         
-        // Sanitize token to remove any non-ASCII characters (like zero-width spaces)
-        const sanitizedToken = this.sanitizeToken(token);
-        console.log('Original token length:', token.length);
-        console.log('Sanitized token length:', sanitizedToken.length);
-        
-        this.token = sanitizedToken;
-        localStorage.setItem('ghub_token', this.token);
-        this.log('Token set and saved to localStorage');
-        
-        // Validate token by checking user info
         try {
+            // First, trim any leading/trailing whitespace
+            let cleanToken = token.trim();
+            
+            // STEP 1: Apply multiple sanitization methods
+            // Method 1: Remove all non-ASCII characters using regex
+            cleanToken = cleanToken.replace(/[^\x00-\x7F]/g, '');
+            
+            // Method 2: Apply encodeURIComponent and then decode to handle escaping correctly
+            cleanToken = decodeURIComponent(encodeURIComponent(cleanToken));
+            
+            // Method 3: Force to ASCII characters only using charCode filtering
+            let asciiOnly = '';
+            for (let i = 0; i < cleanToken.length; i++) {
+                const charCode = cleanToken.charCodeAt(i);
+                if (charCode <= 127) { // ASCII range
+                    asciiOnly += cleanToken.charAt(i);
+                }
+            }
+            cleanToken = asciiOnly;
+            
+            console.log('Original token length:', token.length);
+            console.log('Sanitized token length:', cleanToken.length);
+            
+            // Ensure the token still has a reasonable length after sanitization
+            if (cleanToken.length < 30) {
+                console.error('Token is too short after sanitization, likely contains too many invalid characters');
+                throw new Error('Token contains too many invalid characters');
+            }
+            
+            // Save the sanitized token
+            this.token = cleanToken;
+            localStorage.setItem('ghub_token', this.token);
+            this.log('Token set and saved to localStorage');
+            
+            // Validate token by checking user info
             const isValid = await this.validateToken();
             if (!isValid) {
                 this.clearData();
@@ -52,16 +77,6 @@ class GitHubManager {
             this.clearData();
             return false;
         }
-    }
-
-    /**
-     * Remove non-ASCII characters from token
-     * @param {string} token - Token to sanitize
-     * @returns {string} Sanitized token
-     */
-    sanitizeToken(token) {
-        // Remove all non-ASCII characters (keep only chars 0-127)
-        return token.replace(/[^\x00-\x7F]/g, '');
     }
 
     /**
@@ -159,10 +174,18 @@ class GitHubManager {
      * @returns {Object} Headers object
      */
     createHeaders(includeContentType = false) {
+        // First, ensure token has no problematic characters by re-sanitizing it
+        let safeToken = '';
+        for (let i = 0; i < this.token.length; i++) {
+            const charCode = this.token.charCodeAt(i);
+            if (charCode <= 127) { // Safe ASCII range
+                safeToken += this.token.charAt(i);
+            }
+        }
+        
         const headers = {
-            'Authorization': `token ${this.token}`,  // Changed from 'Bearer' to 'token'
-            'Accept': 'application/vnd.github.v3+json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
+            'Authorization': `token ${safeToken}`,
+            'Accept': 'application/vnd.github.v3+json'
         };
         
         if (includeContentType) {
