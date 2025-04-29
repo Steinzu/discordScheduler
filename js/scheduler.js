@@ -186,6 +186,8 @@ class MessageScheduler {
         }
         
         try {
+            await this.refreshMessages();
+            
             const now = new Date();
             const messagesToSend = this.messages.filter(msg => 
                 new Date(msg.scheduledTime) <= now
