@@ -91,11 +91,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const content = messageContent.value.trim();
+        const titleValue = embedTitle?.value?.trim() || '';
+        const descriptionValue = embedDescription?.value?.trim() || '';
+        
         updateDateTime();
         const timeValue = scheduleTimeHidden.value;
         
-        if (!content && !embedToggle.checked) {
-            showStatus('Please enter a message content or enable embeds', true);
+        // Validate that either content or embed description is provided
+        if (!content && !descriptionValue) {
+            showStatus('Please provide either message content or embed description', true);
+            embedDescription.focus();
             return;
         }
         
@@ -109,58 +114,102 @@ document.addEventListener('DOMContentLoaded', async () => {
             scheduleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
             
             // Create the message data object
-            const messageData = { content };
+            const messageData = {};
+            if (content) {
+                messageData.content = content;
+            }
             
-            // Add embed if enabled
-            if (embedToggle.checked) {
-                const embed = {};
-                
-                if (embedTitle.value) embed.title = embedTitle.value;
-                if (embedDescription.value) embed.description = embedDescription.value;
-                if (embedColor.value) embed.color = parseInt(embedColor.value.substring(1), 16);
-                if (embedImage.value) embed.image = { url: embedImage.value };
-                if (embedThumbnail.value) embed.thumbnail = { url: embedThumbnail.value };
-                
-                // Handle author
-                if (authorName.value) {
-                    embed.author = { name: authorName.value };
-                    if (authorIcon.value) embed.author.icon_url = authorIcon.value;
+            // Create embed
+            const embed = {};
+            let hasEmbedContent = false;
+            
+            if (titleValue) {
+                embed.title = titleValue;
+                hasEmbedContent = true;
+            }
+            
+            if (descriptionValue) {
+                embed.description = descriptionValue;
+                hasEmbedContent = true;
+            }
+            
+            if (embedColor.value) {
+                embed.color = parseInt(embedColor.value.substring(1), 16);
+            }
+            
+            if (embedImage.value.trim()) {
+                embed.image = { url: embedImage.value.trim() };
+                hasEmbedContent = true;
+            }
+            
+            if (embedThumbnail.value.trim()) {
+                embed.thumbnail = { url: embedThumbnail.value.trim() };
+                hasEmbedContent = true;
+            }
+            
+            // Handle author
+            if (authorName.value.trim()) {
+                embed.author = { name: authorName.value.trim() };
+                if (authorIcon.value.trim()) {
+                    embed.author.icon_url = authorIcon.value.trim();
                 }
-                
-                // Handle footer
-                if (footerText.value) {
-                    embed.footer = { text: footerText.value };
-                    if (footerIcon.value) embed.footer.icon_url = footerIcon.value;
+                hasEmbedContent = true;
+            }
+            
+            // Handle footer
+            if (footerText.value.trim()) {
+                embed.footer = { text: footerText.value.trim() };
+                if (footerIcon.value.trim()) {
+                    embed.footer.icon_url = footerIcon.value.trim();
                 }
-                
-                // Handle fields
-                const fieldElements = document.querySelectorAll('.embed-field-row');
-                if (fieldElements.length > 0) {
-                    embed.fields = [];
-                    fieldElements.forEach(fieldEl => {
-                        const name = fieldEl.querySelector('.field-name').value;
-                        const value = fieldEl.querySelector('.field-value').value;
-                        const inline = fieldEl.querySelector('.field-inline').checked;
-                        
-                        if (name && value) {
-                            embed.fields.push({ name, value, inline });
-                        }
-                    });
-                }
-                
-                // Add timestamp if needed
-                embed.timestamp = new Date().toISOString();
-                
-                // Add embed to message
+                hasEmbedContent = true;
+            }
+            
+            // Handle fields
+            const fieldElements = document.querySelectorAll('.embed-field-row');
+            if (fieldElements.length > 0) {
+                embed.fields = [];
+                fieldElements.forEach(fieldEl => {
+                    const name = fieldEl.querySelector('.field-name').value.trim();
+                    const value = fieldEl.querySelector('.field-value').value.trim();
+                    const inline = fieldEl.querySelector('.field-inline').checked;
+                    
+                    if (name && value) {
+                        embed.fields.push({ name, value, inline });
+                        hasEmbedContent = true;
+                    }
+                });
+            }
+            
+            // Add timestamp
+            embed.timestamp = new Date().toISOString();
+            
+            // Add embed to message if it has content
+            if (hasEmbedContent) {
                 messageData.embeds = [embed];
+            } else if (!content) {
+                // If no content and no embed content, force a description
+                messageData.embeds = [{
+                    description: "No content provided",
+                    color: parseInt(embedColor.value.substring(1), 16),
+                    timestamp: new Date().toISOString()
+                }];
             }
             
             await scheduler.scheduleMessage(messageData, new Date(timeValue).toISOString());
             
+            // Clear form fields
             messageContent.value = '';
-            if (embedToggle.checked) {
-                resetEmbedForm();
-            }
+            embedTitle.value = '';
+            embedDescription.value = '';
+            embedImage.value = '';
+            embedThumbnail.value = '';
+            authorName.value = '';
+            authorIcon.value = '';
+            footerText.value = '';
+            footerIcon.value = '';
+            embedFields.innerHTML = '';
+            
             renderMessages();
             showStatus('Message scheduled successfully!');
         } catch (error) {
@@ -169,8 +218,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!githubManager.isAuthenticated()) {
                 showStatus('GitHub token required or invalid', true);
                 tokenModal.classList.add('active');
-            } else {
+            } else if (error.message) {
                 showStatus(`Failed to schedule message: ${error.message}`, true);
+            } else {
+                showStatus('Failed to schedule message: Unknown error', true);
             }
         } finally {
             scheduleBtn.disabled = false;

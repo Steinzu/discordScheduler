@@ -511,6 +511,52 @@ select option {
 }
 
 /* Embed form styles */
+.embed-preview-container {
+    background-color: var(--discord-darkest);
+    border-radius: var(--border-radius-sm);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.embed-form {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.embed-option textarea, 
+.embed-option input[type="text"],
+.embed-option input[type="url"] {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--discord-darkest);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-radius: var(--border-radius-sm);
+}
+
+.embed-option textarea {
+    min-height: 100px;
+}
+
+/* Ensure the form doesn't have too much whitespace */
+.embed-basic-options, 
+.embed-media-options, 
+.embed-author-container, 
+.embed-footer-container {
+    margin-bottom: 15px;
+}
+
+/* Make section headers more visible */
+.embed-author-container h4,
+.embed-footer-container h4,
+.embed-fields-header h4 {
+    color: var(--discord-light);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
 .embed-toggle-container {
     display: flex;
     align-items: center;

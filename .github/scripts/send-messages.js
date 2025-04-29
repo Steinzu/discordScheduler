@@ -46,11 +46,27 @@ async function sendMessage(message) {
     // Handle both old format (string content) and new format (messageData object)
     const payload = message.messageData || { content: message.content };
     
-    await axios.post(webhookUrl, payload);
+    // Validate that there's actual content
+    if (!payload.content?.trim() && 
+        (!payload.embeds || 
+         payload.embeds.length === 0 || 
+         (!payload.embeds[0].description?.trim() && 
+          !payload.embeds[0].title?.trim() && 
+          !payload.embeds[0].fields?.length))) {
+      console.error(`Error sending message ID ${message.id}: Cannot send an empty message (code: 50006)`);
+      return false;
+    }
+    
+    const response = await axios.post(webhookUrl, payload);
     console.log(`Sent message ID: ${message.id}`);
     return true;
   } catch (error) {
-    console.error(`Error sending message ID ${message.id}:`, error.response?.data || error.message);
+    // Specific error handling
+    if (error.response?.data?.code === 50006) {
+      console.error(`Error sending message ID ${message.id}: Cannot send an empty message (code: 50006)`);
+    } else {
+      console.error(`Error sending message ID ${message.id}:`, error.response?.data || error.message);
+    }
     return false;
   }
 }

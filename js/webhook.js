@@ -70,23 +70,37 @@ class DiscordWebhook {
         if (!this.webhookUrl) {
             throw new Error('No webhook URL set');
         }
+        
+        // Prepare the payload based on the content type
+        let payload;
+        if (typeof content === 'string') {
+            // Simple text message
+            if (!content.trim()) {
+                throw new Error('Cannot send an empty message');
+            }
+            payload = { content };
+        } else if (typeof content === 'object') {
+            // Advanced message object
+            payload = content;
+            
+            // Validate that the message has content
+            if (!payload.content?.trim() && 
+                (!payload.embeds || 
+                 payload.embeds.length === 0 || 
+                 (!payload.embeds[0].description?.trim() && 
+                  !payload.embeds[0].title?.trim() && 
+                  !payload.embeds[0].fields?.length))) {
+                throw new Error('Cannot send an empty message');
+            }
+        } else {
+            throw new Error('Invalid message format');
+        }
+        
         let lastError;
         
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
                 this.log(`Sending message (attempt ${attempt + 1}/${retries})`);
-                
-                // Prepare the payload based on the content type
-                let payload;
-                if (typeof content === 'string') {
-                    // Simple text message
-                    payload = { content };
-                } else if (typeof content === 'object') {
-                    // Advanced message object (can include content, embeds, etc.)
-                    payload = content;
-                } else {
-                    throw new Error('Invalid message format');
-                }
                 
                 const response = await fetch(this.webhookUrl, {
                     method: 'POST',
@@ -105,7 +119,13 @@ class DiscordWebhook {
                 }
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorText = await response.text();
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        throw new Error(`Discord API error (${response.status}): ${errorText || response.statusText}`);
+                    }
                     throw new Error(`Discord API error: ${errorData.message || response.statusText}`);
                 }
 
@@ -114,6 +134,13 @@ class DiscordWebhook {
             } catch (error) {
                 lastError = error;
                 this.logError(`Error sending message (attempt ${attempt + 1})`, error);
+
+                // Don't retry empty message errors
+                if (error.message && (
+                    error.message.includes('Cannot send an empty message') || 
+                    error.message.includes('code: 50006'))) {
+                    break;
+                }
 
                 await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
             }
