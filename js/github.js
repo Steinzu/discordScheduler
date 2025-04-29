@@ -1,8 +1,3 @@
-/**
- * Enhanced GitHub Manager v2.0
- * Handles authentication, branch management, and file operations
- * with comprehensive error handling and debugging
- */
 class GitHubManager {
     constructor() {
         this.token = localStorage.getItem('ghub_token') || '';
@@ -31,21 +26,13 @@ class GitHubManager {
         if (!token) return false;
         
         try {
-            // First, trim any leading/trailing whitespace
             let cleanToken = token.trim();
-            
-            // STEP 1: Apply multiple sanitization methods
-            // Method 1: Remove all non-ASCII characters using regex
             cleanToken = cleanToken.replace(/[^\x00-\x7F]/g, '');
-            
-            // Method 2: Apply encodeURIComponent and then decode to handle escaping correctly
             cleanToken = decodeURIComponent(encodeURIComponent(cleanToken));
-            
-            // Method 3: Force to ASCII characters only using charCode filtering
             let asciiOnly = '';
             for (let i = 0; i < cleanToken.length; i++) {
                 const charCode = cleanToken.charCodeAt(i);
-                if (charCode <= 127) { // ASCII range
+                if (charCode <= 127) {
                     asciiOnly += cleanToken.charAt(i);
                 }
             }
@@ -53,19 +40,15 @@ class GitHubManager {
             
             console.log('Original token length:', token.length);
             console.log('Sanitized token length:', cleanToken.length);
-            
-            // Ensure the token still has a reasonable length after sanitization
             if (cleanToken.length < 30) {
                 console.error('Token is too short after sanitization, likely contains too many invalid characters');
                 throw new Error('Token contains too many invalid characters');
             }
-            
-            // Save the sanitized token
+
             this.token = cleanToken;
             localStorage.setItem('ghub_token', this.token);
             this.log('Token set and saved to localStorage');
-            
-            // Validate token by checking user info
+
             const isValid = await this.validateToken();
             if (!isValid) {
                 this.clearData();
@@ -90,14 +73,13 @@ class GitHubManager {
             console.log('Authorization header present:', !!headers.Authorization);
             console.log('Token length:', this.token.length);
             console.log('First few characters:', this.token.substring(0, 4) + '...');
-            
-            // Check user info with modified fetch options to prevent CORS issues
+
             const userResponse = await fetch('https://api.github.com/user', {
                 method: 'GET',
                 headers: headers,
                 mode: 'cors',
-                cache: 'no-cache', // Prevent cache-control header
-                credentials: 'omit' // Don't send cookies which can cause CORS issues
+                cache: 'no-cache',
+                credentials: 'omit'
             });
             
             if (!userResponse.ok) {
@@ -106,8 +88,7 @@ class GitHubManager {
             
             this.userInfo = await userResponse.json();
             this.log('Token validated successfully', { username: this.userInfo.login });
-            
-            // Check repo access with the same fetch options
+
             const repoResponse = await fetch(`https://api.github.com/repos/${this.repo}`, {
                 headers: this.createHeaders(),
                 mode: 'cors',
@@ -133,7 +114,7 @@ class GitHubManager {
 
     /**
      * Get current credentials
-     * @returns {Object} Credentials object
+     * @returns {Object}
      */
     getCredentials() {
         return {
@@ -145,8 +126,8 @@ class GitHubManager {
 
     /**
      * Log messages in debug mode
-     * @param {string} message - Message to log
-     * @param {Object} data - Optional data to log
+     * @param {string} message
+     * @param {Object} data
      */
     log(message, data = null) {
         if (this.debug) {
@@ -160,8 +141,8 @@ class GitHubManager {
 
     /**
      * Log errors
-     * @param {string} message - Error message
-     * @param {Error|Object} error - Error object
+     * @param {string} message
+     * @param {Error|Object} error
      */
     logError(message, error) {
         console.error(`[GitHub Error] ${message}`, error);
@@ -177,20 +158,17 @@ class GitHubManager {
 
     /**
      * Create standardized headers for GitHub API requests
-     * @param {boolean} includeContentType - Whether to include Content-Type header
-     * @returns {Object} Headers object
+     * @param {boolean} includeContentType
+     * @returns {Object}
      */
     createHeaders(includeContentType = false) {
-        // First, ensure token has no problematic characters by re-sanitizing it
         let safeToken = '';
         for (let i = 0; i < this.token.length; i++) {
             const charCode = this.token.charCodeAt(i);
-            if (charCode <= 127) { // Safe ASCII range
+            if (charCode <= 127) {
                 safeToken += this.token.charAt(i);
             }
         }
-        
-        // Simplified headers - removed Cache-Control which causes CORS issues
         const headers = {
             'Authorization': `token ${safeToken}`,
             'Accept': 'application/vnd.github.v3+json'
@@ -256,8 +234,8 @@ class GitHubManager {
 
     /**
      * Save scheduled messages to GitHub
-     * @param {Array} messages - Array of message objects to save
-     * @returns {Promise<boolean>} Success status
+     * @param {Array} messages
+     * @returns {Promise<boolean>}
      */
     async saveScheduledMessages(messages) {
         if (!this.isAuthenticated()) {
@@ -267,36 +245,27 @@ class GitHubManager {
 
         try {
             this.log(`Saving ${messages.length} message(s)`);
-
-            // Check if gh-pages branch exists first
             let branchExists = await this.checkBranchExists('gh-pages');
-            
-            // Create branch if it doesn't exist
             if (!branchExists) {
                 const branchCreated = await this.createGhPagesBranch();
                 if (!branchCreated) {
                     throw new Error('Could not create gh-pages branch');
                 }
-                // Retry branch check to confirm creation
                 branchExists = await this.checkBranchExists('gh-pages');
                 if (!branchExists) {
                     throw new Error('gh-pages branch creation failed verification');
                 }
             }
             
-            // Ensure data directory exists
             await this.ensureDataDirectoryExists();
             
-            // Prepare content for saving
             const content = JSON.stringify({ messages: messages }, null, 2);
             const encodedContent = btoa(unescape(encodeURIComponent(content)));
             
-            // Get SHA for the file if we don't have it
             if (!this.lastSha) {
                 await this.getMessageFileSha();
             }
 
-            // Construct request body
             const body = {
                 message: 'Update scheduled messages',
                 content: encodedContent,
@@ -312,7 +281,6 @@ class GitHubManager {
                 contentLength: content.length 
             });
 
-            // Submit the request with retries
             const saveResponse = await this.fetchWithRetry(
                 `https://api.github.com/repos/${this.repo}/contents/data/messages.json`,
                 {
@@ -320,7 +288,7 @@ class GitHubManager {
                     headers: this.createHeaders(true),
                     body: JSON.stringify(body)
                 },
-                3 // Retry 3 times
+                3
             );
 
             if (saveResponse.ok) {
@@ -348,18 +316,16 @@ class GitHubManager {
 
     /**
      * Fetch with retry logic
-     * @param {string} url - URL to fetch
-     * @param {Object} options - Fetch options
-     * @param {number} retries - Number of retries
-     * @returns {Promise<Response>} Fetch response
+     * @param {string} url
+     * @param {Object} options
+     * @param {number} retries
+     * @returns {Promise<Response>}
      */
     async fetchWithRetry(url, options, retries = 3) {
-        // Add mode: 'cors' if not present
         if (!options.mode) {
             options.mode = 'cors';
         }
-        
-        // Add cache and credentials options to prevent CORS issues
+
         if (!options.cache) {
             options.cache = 'no-cache';
         }
@@ -373,13 +339,11 @@ class GitHubManager {
         for (let i = 0; i < retries; i++) {
             try {
                 const response = await fetch(url, options);
-                
-                // If successful or permanent error, return immediately
+
                 if (response.ok || response.status < 500) {
                     return response;
                 }
                 
-                // For server errors, retry after a delay
                 this.log(`Retry ${i+1}/${retries} for ${options.method} ${url} (status ${response.status})`);
                 await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
                 
@@ -395,8 +359,8 @@ class GitHubManager {
 
     /**
      * Check if a branch exists
-     * @param {string} branchName - Branch to check
-     * @returns {Promise<boolean>} Whether branch exists
+     * @param {string} branchName
+     * @returns {Promise<boolean>}
      */
     async checkBranchExists(branchName) {
         try {
@@ -420,7 +384,7 @@ class GitHubManager {
 
     /**
      * Get the SHA of the messages file if it exists
-     * @returns {Promise<string|null>} SHA of the file or null if it doesn't exist
+     * @returns {Promise<string|null>}
      */
     async getMessageFileSha() {
         try {
@@ -451,7 +415,7 @@ class GitHubManager {
 
     /**
      * Ensure data directory exists in gh-pages branch
-     * @returns {Promise<boolean>} Success status
+     * @returns {Promise<boolean>}
      */
     async ensureDataDirectoryExists() {
         try {
@@ -469,9 +433,8 @@ class GitHubManager {
             
             if (dirResponse.status === 404) {
                 this.log('Data directory does not exist, creating it');
-                
-                // Create an empty .gitkeep file in the data directory
-                const content = btoa(''); // Empty file content
+
+                const content = btoa('');
                 
                 const createDirResponse = await fetch(
                     `https://api.github.com/repos/${this.repo}/contents/data/.gitkeep`, 
@@ -505,19 +468,17 @@ class GitHubManager {
 
     /**
      * Create the gh-pages branch if it doesn't exist
-     * @returns {Promise<boolean>} Success status
+     * @returns {Promise<boolean>}
      */
     async createGhPagesBranch() {
         try {
             this.log('Creating gh-pages branch');
-            
-            // Get default branch if we don't have it
+
             if (!this.defaultBranch) {
                 const repoInfo = await this.getRepoInfo();
                 this.defaultBranch = repoInfo.default_branch;
             }
-            
-            // Get the SHA of latest commit on default branch
+
             const refResponse = await fetch(
                 `https://api.github.com/repos/${this.repo}/git/refs/heads/${this.defaultBranch}`,
                 { headers: this.createHeaders() }
@@ -531,8 +492,7 @@ class GitHubManager {
             const refData = await refResponse.json();
             const sha = refData.object.sha;
             this.log(`Got SHA for latest commit: ${sha}`);
-            
-            // Create the gh-pages branch
+
             const createResponse = await fetch(
                 `https://api.github.com/repos/${this.repo}/git/refs`,
                 {
@@ -551,8 +511,7 @@ class GitHubManager {
             }
             
             const createErrorText = await createResponse.text();
-            
-            // If branch already exists, that's fine
+
             if (createErrorText.includes('Reference already exists')) {
                 this.log('Branch already exists, continuing');
                 return true;
@@ -568,7 +527,7 @@ class GitHubManager {
 
     /**
      * Get repository information
-     * @returns {Promise<Object>} Repository information
+     * @returns {Promise<Object>}
      */
     async getRepoInfo() {
         try {

@@ -1,7 +1,3 @@
-/**
- * Enhanced Message Scheduler
- * Handles scheduling, storing, and sending messages with improved reliability
- */
 class MessageScheduler {
     constructor(webhook, githubManager) {
         this.webhook = webhook;
@@ -17,8 +13,8 @@ class MessageScheduler {
 
     /**
      * Log messages in debug mode
-     * @param {string} message - Message to log
-     * @param {Object} data - Optional data to log
+     * @param {string} message
+     * @param {Object} data
      */
     log(message, data = null) {
         if (this.debug) {
@@ -32,8 +28,8 @@ class MessageScheduler {
 
     /**
      * Log errors
-     * @param {string} message - Error message
-     * @param {Error|Object} error - Error object
+     * @param {string} message
+     * @param {Error|Object} error
      */
     logError(message, error) {
         console.error(`[Scheduler Error] ${message}`, error);
@@ -48,10 +44,8 @@ class MessageScheduler {
             this.log('Initializing scheduler');
             await this.refreshMessages();
             
-            // Set up periodic refresh (every 60 seconds)
             this.refreshInterval = setInterval(() => this.refreshMessages(), 60000);
             
-            // Start checking for messages to send
             this.startMessageCheck();
             
             this.log('Scheduler initialized successfully');
@@ -64,17 +58,15 @@ class MessageScheduler {
     
     /**
      * Refresh messages from GitHub
-     * @returns {Promise<Array>} Updated messages
+     * @returns {Promise<Array>}
      */
     async refreshMessages() {
         try {
-            // Only fetch if authenticated
             if (!this.githubManager.isAuthenticated()) {
                 this.log('Not authenticated, skipping refresh');
                 return this.messages;
             }
             
-            // Prevent too frequent refreshes
             const now = Date.now();
             if (now - this.lastFetchTime < 10000) {
                 this.log('Skipping refresh - too soon since last refresh');
@@ -86,7 +78,6 @@ class MessageScheduler {
             
             const newMessages = await this.githubManager.fetchScheduledMessages();
             
-            // Check if messages have changed
             if (JSON.stringify(this.messages) !== JSON.stringify(newMessages)) {
                 this.log(`Messages updated: ${newMessages.length} messages retrieved`);
                 this.messages = newMessages;
@@ -104,9 +95,9 @@ class MessageScheduler {
 
     /**
      * Schedule a new message
-     * @param {string} content - Message content
-     * @param {string} scheduledTime - ISO datetime string
-     * @returns {Promise<Object>} The scheduled message
+     * @param {string} content
+     * @param {string} scheduledTime
+     * @returns {Promise<Object>}
      */
     async scheduleMessage(content, scheduledTime) {
         try {
@@ -134,7 +125,7 @@ class MessageScheduler {
 
     /**
      * Get all scheduled messages
-     * @returns {Array} All messages
+     * @returns {Array}
      */
     getAllMessages() {
         return [...this.messages];
@@ -142,8 +133,8 @@ class MessageScheduler {
 
     /**
      * Delete a message by ID
-     * @param {string} id - Message ID
-     * @returns {Promise<boolean>} Success status
+     * @param {string} id
+     * @returns {Promise<boolean>}
      */
     async deleteMessage(id) {
         try {
@@ -179,10 +170,8 @@ class MessageScheduler {
         this.isRunning = true;
         this.log('Starting periodic message check');
         
-        // Check immediately
         this.checkScheduledMessages();
         
-        // Check every 30 seconds for messages to send
         setInterval(() => this.checkScheduledMessages(), 30000);
     }
     
@@ -214,11 +203,9 @@ class MessageScheduler {
                     this.log(`Sending message: ${message.id}`);
                     await this.webhook.sendMessage(message.content);
                     
-                    // Remove the sent message from the list
                     this.messages = this.messages.filter(msg => msg.id !== message.id);
                     saveRequired = true;
                     
-                    // Notify UI
                     this.triggerEvent('messageSent', { messageId: message.id });
                     this.log(`Message ${message.id} sent successfully`);
                     
@@ -228,7 +215,6 @@ class MessageScheduler {
                 }
             }
             
-            // Save the updated messages (with sent messages removed)
             if (saveRequired) {
                 await this.saveMessages();
             }
@@ -239,22 +225,19 @@ class MessageScheduler {
 
     /**
      * Save messages to GitHub with debouncing
-     * @returns {Promise<boolean>} Success status
+     * @returns {Promise<boolean>}
      */
     async saveMessages() {
-        // If we already have a pending save, just mark that another save is needed
         if (this.pendingSave) {
             this.log('Another save already pending, will save soon');
             this.needsAnotherSave = true;
             return;
         }
-        
-        // Prevent too frequent saves
+
         const now = Date.now();
         const timeSinceLastSave = now - this.lastSaveTime;
         
         if (timeSinceLastSave < 2000) {
-            // If it's too soon, schedule a save for later
             this.log(`Too soon to save (${timeSinceLastSave}ms), debouncing`);
             this.pendingSave = true;
             
@@ -263,7 +246,6 @@ class MessageScheduler {
                 this.needsAnotherSave = false;
                 await this.saveMessages();
                 
-                // If another save was requested while we were saving, do it again
                 if (this.needsAnotherSave) {
                     setTimeout(() => this.saveMessages(), 100);
                 }
@@ -291,8 +273,8 @@ class MessageScheduler {
 
     /**
      * Trigger a custom event
-     * @param {string} eventName - Event name
-     * @param {Object} data - Event data
+     * @param {string} eventName
+     * @param {Object} data
      */
     triggerEvent(eventName, data) {
         const event = new CustomEvent(eventName, { detail: data });

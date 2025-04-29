@@ -1,7 +1,3 @@
-/**
- * Enhanced Discord Webhook Handler
- * Handles sending messages to Discord with improved error handling
- */
 class DiscordWebhook {
     constructor() {
         this.webhookUrl = 'https://discord.com/api/webhooks/1366721932980125696/JkxU-96B0XKTD-m9bFFIcwD_EcxYsCHGFeOdkRCt7qsWilsatChzvAC8qXBzRWzadt9u';
@@ -10,7 +6,7 @@ class DiscordWebhook {
 
     /**
      * Get the webhook URL
-     * @returns {string} Webhook URL
+     * @returns {string}
      */
     getWebhookUrl() {
         return this.webhookUrl;
@@ -18,7 +14,7 @@ class DiscordWebhook {
 
     /**
      * Set the webhook URL
-     * @param {string} url - Discord webhook URL
+     * @param {string} url
      */
     setWebhookUrl(url) {
         if (this.isValidWebhookUrl(url)) {
@@ -30,21 +26,20 @@ class DiscordWebhook {
 
     /**
      * Check if a webhook URL is valid
-     * @param {string} url - URL to check
-     * @returns {boolean} Whether URL is valid
+     * @param {string} url
+     * @returns {boolean}
      */
     isValidWebhookUrl(url) {
         if (!url) return false;
         
-        // Basic validation for Discord webhook URL format
         return url.startsWith('https://discord.com/api/webhooks/') || 
                url.startsWith('https://discordapp.com/api/webhooks/');
     }
 
     /**
      * Log messages in debug mode
-     * @param {string} message - Message to log
-     * @param {Object} data - Optional data to log
+     * @param {string} message
+     * @param {Object} data
      */
     log(message, data = null) {
         if (this.debug) {
@@ -58,8 +53,8 @@ class DiscordWebhook {
 
     /**
      * Log errors
-     * @param {string} message - Error message
-     * @param {Error|Object} error - Error object
+     * @param {string} message
+     * @param {Error|Object} error
      */
     logError(message, error) {
         console.error(`[Discord Error] ${message}`, error);
@@ -67,16 +62,14 @@ class DiscordWebhook {
 
     /**
      * Send a message to Discord with retry logic
-     * @param {string} content - Message content to send
-     * @param {number} retries - Number of retries
-     * @returns {Promise<boolean>} Success status
+     * @param {string} content
+     * @param {number} retries
+     * @returns {Promise<boolean>}
      */
     async sendMessage(content, retries = 3) {
         if (!this.webhookUrl) {
             throw new Error('No webhook URL set');
         }
-
-        // Basic rate limit handling
         let lastError;
         
         for (let attempt = 0; attempt < retries; attempt++) {
@@ -93,7 +86,6 @@ class DiscordWebhook {
                     })
                 });
 
-                // Check for rate limiting
                 if (response.status === 429) {
                     const rateLimitData = await response.json();
                     const retryAfter = (rateLimitData.retry_after || 1) * 1000;
@@ -112,8 +104,7 @@ class DiscordWebhook {
             } catch (error) {
                 lastError = error;
                 this.logError(`Error sending message (attempt ${attempt + 1})`, error);
-                
-                // Wait a bit before retry (increasing delay)
+
                 await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
             }
         }

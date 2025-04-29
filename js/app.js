@@ -1,14 +1,8 @@
-/**
- * Enhanced Discord Scheduler UI Application
- * Handles UI interactions and coordinates components
- */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize components
     const webhook = new DiscordWebhook();
     const githubManager = new GitHubManager();
     const scheduler = new MessageScheduler(webhook, githubManager);
     
-    // UI elements
     const messageContent = document.getElementById('message-content');
     const scheduleTimeHidden = document.getElementById('schedule-time');
     const scheduleDate = document.getElementById('schedule-date');
@@ -23,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginStatus = document.getElementById('login-status');
     const scheduleHeader = document.querySelector('.message-composer h2');
 
-    // Debug logging
     const debug = true;
     function log(message, data = null) {
         if (debug) {
@@ -35,13 +28,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Initialize hour and minute selectors
     initTimeSelectors();
     
-    // Update UI to show authentication status 
     updateAuthStatus();
 
-    // Check if GitHub token exists
     if (!githubManager.isAuthenticated()) {
         log('No GitHub token found, showing token modal');
         tokenModal.classList.add('active');
@@ -50,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         initializeApp();
     }
 
-    // Token submission
     submitToken.addEventListener('click', async () => {
         const token = githubToken.value.trim();
         if (!token) {
@@ -61,7 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showStatus('Validating token...', false);
         
         try {
-            // This validates the token and repository access
             const valid = await githubManager.setToken(token);
             
             if (valid) {
@@ -80,7 +68,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Event listeners
     scheduleBtn.addEventListener('click', async () => {
         if (!githubManager.isAuthenticated()) {
             showStatus('GitHub token required', true);
@@ -89,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const content = messageContent.value.trim();
-        updateDateTime(); // Ensure the hidden field has the latest value
+        updateDateTime();
         const timeValue = scheduleTimeHidden.value;
         
         if (!content) {
@@ -126,7 +113,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Event listeners
     document.addEventListener('messageSent', (event) => {
         log('Message sent event received', event.detail);
         renderMessages();
@@ -164,10 +150,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function initializeApp() {
         log('Initializing application');
         
-        // Update UI to show we're logged in
         updateAuthStatus();
         
-        // Set minimum date to today
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -175,26 +159,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         scheduleDate.min = `${year}-${month}-${day}`;
         scheduleDate.value = `${year}-${month}-${day}`;
 
-        // Set current hour and minute values (rounded to nearest 10 min)
         const currentHour = now.getHours();
         const currentMinute = Math.ceil(now.getMinutes() / 10) * 10;
         hourSelect.value = currentHour;
         minuteSelect.value = currentMinute >= 60 ? 0 : currentMinute;
         
-        // If minutes rounded to next hour, increment hour
         if (currentMinute >= 60) {
             hourSelect.value = (currentHour + 1) % 24;
         }
 
-        // Update hidden datetime field
         updateDateTime();
 
-        // Set up event listeners for date/time changes
         scheduleDate.addEventListener('change', updateDateTime);
         hourSelect.addEventListener('change', updateDateTime);
         minuteSelect.addEventListener('change', updateDateTime);
         
-        // Initialize the scheduler
         try {
             showStatus('Connecting to GitHub...');
             await scheduler.init();
@@ -224,7 +203,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </button>
                 `;
                 
-                // Add logout button functionality
                 document.getElementById('logout-btn').addEventListener('click', () => {
                     githubManager.clearData();
                     updateAuthStatus();
@@ -233,12 +211,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
             
-            // Update the compose card to show we can add messages
             if (scheduleHeader) {
                 scheduleHeader.innerHTML = '<i class="far fa-calendar-plus"></i> Create Schedule';
             }
             
-            // Enable the schedule button
             if (scheduleBtn) {
                 scheduleBtn.disabled = false;
             }
@@ -252,18 +228,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </button>
                 `;
                 
-                // Add login button functionality
                 document.getElementById('login-btn').addEventListener('click', () => {
                     tokenModal.classList.add('active');
                 });
             }
             
-            // Update the compose card to show auth required
             if (scheduleHeader) {
                 scheduleHeader.innerHTML = '<i class="fas fa-lock"></i> Authentication Required';
             }
             
-            // Disable the schedule button
             if (scheduleBtn) {
                 scheduleBtn.disabled = true;
             }
@@ -276,11 +249,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     function initTimeSelectors() {
         log('Initializing time selectors');
         
-        // Clear existing options
         hourSelect.innerHTML = '';
         minuteSelect.innerHTML = '';
         
-        // Add hours (0-23)
         for (let i = 0; i < 24; i++) {
             const option = document.createElement('option');
             option.value = i;
@@ -288,7 +259,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             hourSelect.appendChild(option);
         }
         
-        // Add minutes (00, 10, 20, 30, 40, 50)
         for (let i = 0; i < 60; i += 10) {
             const option = document.createElement('option');
             option.value = i;
@@ -313,8 +283,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /**
      * Format date in 24-hour format
-     * @param {Date} date - Date to format
-     * @returns {string} Formatted time
+     * @param {Date} date
+     * @returns {string}
      */
     function formatTime(date) {
         return date.toLocaleTimeString('en-GB', { 
@@ -326,8 +296,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /**
      * Format full date with 24-hour time
-     * @param {Date} date - Date to format
-     * @returns {string} Formatted date and time
+     * @param {Date} date
+     * @returns {string}
      */
     function formatDateTime(date) {
         return date.toLocaleDateString('en-GB', {
@@ -352,10 +322,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
-        // Sort by scheduled time
         messages.sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime));
-        
-        // Render each message
+
         messages.forEach(message => {
             const messageEl = document.createElement('div');
             messageEl.className = 'message-item';
@@ -376,8 +344,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             messageList.appendChild(messageEl);
         });
-        
-        // Add event listeners to delete buttons
+
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 try {
@@ -398,8 +365,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /**
      * Show a status message
-     * @param {string} message - Message to show
-     * @param {boolean} isError - Whether this is an error message
+     * @param {string} message
+     * @param {boolean} isError
      */
     function showStatus(message, isError = false) {
         log(`Status update: ${message}`, { isError });
@@ -414,8 +381,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     /**
      * Escape HTML to prevent XSS
-     * @param {string} text - Text to escape
-     * @returns {string} Escaped text
+     * @param {string} text
+     * @returns {string}
      */
     function escape(text) {
         const div = document.createElement('div');
