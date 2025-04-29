@@ -95,17 +95,17 @@ class MessageScheduler {
 
     /**
      * Schedule a new message
-     * @param {string} content
+     * @param {Object} messageData - Contains content and/or embed information
      * @param {string} scheduledTime
      * @returns {Promise<Object>}
      */
-    async scheduleMessage(content, scheduledTime) {
+    async scheduleMessage(messageData, scheduledTime) {
         try {
             this.log(`Scheduling message for ${scheduledTime}`);
             
             const newMessage = {
                 id: Date.now().toString(),
-                content: content,
+                messageData: messageData,
                 scheduledTime: scheduledTime,
                 created: new Date().toISOString()
             };
@@ -201,7 +201,7 @@ class MessageScheduler {
             for (const message of messagesToSend) {
                 try {
                     this.log(`Sending message: ${message.id}`);
-                    await this.webhook.sendMessage(message.content);
+                    await this.webhook.sendMessage(message.messageData);
                     
                     this.messages = this.messages.filter(msg => msg.id !== message.id);
                     saveRequired = true;

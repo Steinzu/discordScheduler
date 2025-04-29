@@ -62,7 +62,7 @@ class DiscordWebhook {
 
     /**
      * Send a message to Discord with retry logic
-     * @param {string} content
+     * @param {string|Object} content - String for simple message, Object for advanced message with embeds
      * @param {number} retries
      * @returns {Promise<boolean>}
      */
@@ -76,14 +76,24 @@ class DiscordWebhook {
             try {
                 this.log(`Sending message (attempt ${attempt + 1}/${retries})`);
                 
+                // Prepare the payload based on the content type
+                let payload;
+                if (typeof content === 'string') {
+                    // Simple text message
+                    payload = { content };
+                } else if (typeof content === 'object') {
+                    // Advanced message object (can include content, embeds, etc.)
+                    payload = content;
+                } else {
+                    throw new Error('Invalid message format');
+                }
+                
                 const response = await fetch(this.webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        content: content
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.status === 429) {

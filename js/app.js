@@ -17,6 +17,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginStatus = document.getElementById('login-status');
     const scheduleHeader = document.querySelector('.message-composer h2');
 
+    // References to embed form elements
+    const embedToggle = document.getElementById('embed-toggle');
+    const embedForm = document.getElementById('embed-form');
+    const embedTitle = document.getElementById('embed-title');
+    const embedDescription = document.getElementById('embed-description');
+    const embedColor = document.getElementById('embed-color');
+    const embedImage = document.getElementById('embed-image');
+    const embedThumbnail = document.getElementById('embed-thumbnail');
+    const addFieldBtn = document.getElementById('add-field');
+    const embedFields = document.getElementById('embed-fields');
+    const authorName = document.getElementById('author-name');
+    const authorIcon = document.getElementById('author-icon');
+    const footerText = document.getElementById('footer-text');
+    const footerIcon = document.getElementById('footer-icon');
+
     const debug = true;
     function log(message, data = null) {
         if (debug) {
@@ -79,8 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDateTime();
         const timeValue = scheduleTimeHidden.value;
         
-        if (!content) {
-            showStatus('Please enter a message content', true);
+        if (!content && !embedToggle.checked) {
+            showStatus('Please enter a message content or enable embeds', true);
             return;
         }
         
@@ -93,9 +108,59 @@ document.addEventListener('DOMContentLoaded', async () => {
             scheduleBtn.disabled = true;
             scheduleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
             
-            await scheduler.scheduleMessage(content, new Date(timeValue).toISOString());
+            // Create the message data object
+            const messageData = { content };
+            
+            // Add embed if enabled
+            if (embedToggle.checked) {
+                const embed = {};
+                
+                if (embedTitle.value) embed.title = embedTitle.value;
+                if (embedDescription.value) embed.description = embedDescription.value;
+                if (embedColor.value) embed.color = parseInt(embedColor.value.substring(1), 16);
+                if (embedImage.value) embed.image = { url: embedImage.value };
+                if (embedThumbnail.value) embed.thumbnail = { url: embedThumbnail.value };
+                
+                // Handle author
+                if (authorName.value) {
+                    embed.author = { name: authorName.value };
+                    if (authorIcon.value) embed.author.icon_url = authorIcon.value;
+                }
+                
+                // Handle footer
+                if (footerText.value) {
+                    embed.footer = { text: footerText.value };
+                    if (footerIcon.value) embed.footer.icon_url = footerIcon.value;
+                }
+                
+                // Handle fields
+                const fieldElements = document.querySelectorAll('.embed-field-row');
+                if (fieldElements.length > 0) {
+                    embed.fields = [];
+                    fieldElements.forEach(fieldEl => {
+                        const name = fieldEl.querySelector('.field-name').value;
+                        const value = fieldEl.querySelector('.field-value').value;
+                        const inline = fieldEl.querySelector('.field-inline').checked;
+                        
+                        if (name && value) {
+                            embed.fields.push({ name, value, inline });
+                        }
+                    });
+                }
+                
+                // Add timestamp if needed
+                embed.timestamp = new Date().toISOString();
+                
+                // Add embed to message
+                messageData.embeds = [embed];
+            }
+            
+            await scheduler.scheduleMessage(messageData, new Date(timeValue).toISOString());
             
             messageContent.value = '';
+            if (embedToggle.checked) {
+                resetEmbedForm();
+            }
             renderMessages();
             showStatus('Message scheduled successfully!');
         } catch (error) {
@@ -350,8 +415,81 @@ document.addEventListener('DOMContentLoaded', async () => {
             const scheduledDate = new Date(message.scheduledTime);
             const isPastDue = scheduledDate <= new Date();
             
+            // Get preview content
+            let previewContent = '';
+            
+            if (message.messageData) {
+                // New format
+                if (message.messageData.content) {
+                    previewContent += `<div class="message-preview-content">${escape(message.messageData.content)}</div>`;
+                }
+                
+                if (message.messageData.embeds && message.messageData.embeds.length > 0) {
+                    const embed = message.messageData.embeds[0];
+                    previewContent += `<div class="message-embed-preview">`;
+                    
+                    // Add color bar
+                    const colorBar = embed.color ? `#${embed.color.toString(16).padStart(6, '0')}` : '#5865F2';
+                    previewContent += `<div class="embed-color-bar" style="background-color: ${colorBar}"></div>`;
+                    
+                    previewContent += `<div class="embed-content">`;
+                    
+                    // Author section
+                    if (embed.author) {
+                        previewContent += `<div class="embed-author">`;
+                        if (embed.author.icon_url) {
+                            previewContent += `<img src="${escape(embed.author.icon_url)}" alt="Author icon" class="embed-author-icon">`;
+                        }
+                        previewContent += `<span>${escape(embed.author.name)}</span></div>`;
+                    }
+                    
+                    // Title
+                    if (embed.title) {
+                        previewContent += `<div class="embed-title">${escape(embed.title)}</div>`;
+                    }
+                    
+                    // Description
+                    if (embed.description) {
+                        previewContent += `<div class="embed-description">${escape(embed.description)}</div>`;
+                    }
+                    
+                    // Fields
+                    if (embed.fields && embed.fields.length > 0) {
+                        previewContent += `<div class="embed-fields">`;
+                        embed.fields.forEach(field => {
+                            previewContent += `<div class="embed-field ${field.inline ? 'embed-field-inline' : ''}">
+                                <div class="embed-field-name">${escape(field.name)}</div>
+                                <div class="embed-field-value">${escape(field.value)}</div>
+                            </div>`;
+                        });
+                        previewContent += `</div>`;
+                    }
+                    
+                    // Image
+                    if (embed.image) {
+                        previewContent += `<div class="embed-image-container">
+                            <img src="${escape(embed.image.url)}" alt="Embed image" class="embed-image">
+                        </div>`;
+                    }
+                    
+                    // Footer
+                    if (embed.footer) {
+                        previewContent += `<div class="embed-footer">`;
+                        if (embed.footer.icon_url) {
+                            previewContent += `<img src="${escape(embed.footer.icon_url)}" alt="Footer icon" class="embed-footer-icon">`;
+                        }
+                        previewContent += `<span>${escape(embed.footer.text)}</span></div>`;
+                    }
+                    
+                    previewContent += `</div></div>`;
+                }
+            } else {
+                // Old format (simple content)
+                previewContent = `<div class="message-preview-content">${escape(message.content)}</div>`;
+            }
+            
             messageEl.innerHTML = `
-                <div class="message-content">${escape(message.content)}</div>
+                <div class="message-preview">${previewContent}</div>
                 <div class="message-schedule">
                     <span>Scheduled for: ${formatDateTime(scheduledDate)}</span>
                     ${isPastDue ? '<span class="pending-badge">Sending soon</span>' : ''}
@@ -407,5 +545,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Reset the embed form
+     */
+    function resetEmbedForm() {
+        embedTitle.value = '';
+        embedDescription.value = '';
+        embedColor.value = '#5865F2'; // Discord blue
+        embedImage.value = '';
+        embedThumbnail.value = '';
+        authorName.value = '';
+        authorIcon.value = '';
+        footerText.value = '';
+        footerIcon.value = '';
+        embedFields.innerHTML = '';
+    }
+
+    /**
+     * Toggle embed form visibility
+     */
+    if (embedToggle) {
+        embedToggle.addEventListener('change', () => {
+            if (embedToggle.checked) {
+                embedForm.classList.remove('hidden');
+            } else {
+                embedForm.classList.add('hidden');
+            }
+        });
+    }
+
+    /**
+     * Add a new field to the embed
+     */
+    if (addFieldBtn) {
+        addFieldBtn.addEventListener('click', () => {
+            const fieldRow = document.createElement('div');
+            fieldRow.className = 'embed-field-row';
+            fieldRow.innerHTML = `
+                <div class="field-inputs">
+                    <input type="text" class="field-name" placeholder="Field Name">
+                    <input type="text" class="field-value" placeholder="Field Value">
+                </div>
+                <div class="field-options">
+                    <label>
+                        <input type="checkbox" class="field-inline"> Inline
+                    </label>
+                    <button type="button" class="remove-field">Remove</button>
+                </div>
+            `;
+            
+            embedFields.appendChild(fieldRow);
+            
+            // Add remove button functionality
+            fieldRow.querySelector('.remove-field').addEventListener('click', () => {
+                fieldRow.remove();
+            });
+        });
     }
 });

@@ -43,9 +43,10 @@ console.log(`Found ${messagesToSend.length} messages to send`);
 // Function to send a message to Discord webhook
 async function sendMessage(message) {
   try {
-    await axios.post(webhookUrl, {
-      content: message.content
-    });
+    // Handle both old format (string content) and new format (messageData object)
+    const payload = message.messageData || { content: message.content };
+    
+    await axios.post(webhookUrl, payload);
     console.log(`Sent message ID: ${message.id}`);
     return true;
   } catch (error) {
