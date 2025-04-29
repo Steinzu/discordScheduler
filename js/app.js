@@ -194,10 +194,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const credentials = githubManager.getCredentials();
             const username = credentials.user || 'authenticated';
             
+            updateLoginStatus(true);
+            
             if (loginStatus) {
-                loginStatus.innerHTML = `
-                    <i class="fas fa-check-circle"></i>
-                    Logged in as <strong>${username}</strong>
+                loginStatus.innerHTML += `
+                    Logged in</strong>
                     <button id="logout-btn" class="text-btn">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
@@ -219,10 +220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 scheduleBtn.disabled = false;
             }
         } else {
+            updateLoginStatus(false);
+            
             if (loginStatus) {
-                loginStatus.innerHTML = `
-                    <i class="fas fa-exclamation-circle"></i>
-                    Not logged in
+                loginStatus.innerHTML += `
                     <button id="login-btn" class="text-btn">
                         <i class="fas fa-sign-in-alt"></i> Login
                     </button>
@@ -240,6 +241,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (scheduleBtn) {
                 scheduleBtn.disabled = true;
             }
+        }
+    }
+
+    /**
+     * Update login status display
+     * @param {boolean} isLoggedIn
+     */
+    function updateLoginStatus(isLoggedIn) {
+        const loginStatus = document.getElementById('login-status');
+        
+        if (isLoggedIn) {
+            // Show just the success icon
+            loginStatus.className = 'auth-status logged-in';
+            loginStatus.innerHTML = '<i class="fas fa-check-circle"></i>';
+        } else {
+            // Not logged in
+            loginStatus.className = 'auth-status logged-out';
+            loginStatus.innerHTML = '<i class="fas fa-times-circle"></i> Not logged in';
         }
     }
 
