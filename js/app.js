@@ -1,8 +1,14 @@
+/**
+ * Enhanced Discord Scheduler UI Application
+ * Handles UI interactions and coordinates components
+ */
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize components
     const webhook = new DiscordWebhook();
     const githubManager = new GitHubManager();
     const scheduler = new MessageScheduler(webhook, githubManager);
     
+    // UI elements
     const messageContent = document.getElementById('message-content');
     const scheduleTimeHidden = document.getElementById('schedule-time');
     const scheduleDate = document.getElementById('schedule-date');
@@ -14,67 +20,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tokenModal = document.getElementById('token-modal');
     const githubToken = document.getElementById('github-token');
     const submitToken = document.getElementById('submit-token');
+    const loginStatus = document.getElementById('login-status');
+    const scheduleHeader = document.querySelector('.message-composer h2');
+
+    // Debug logging
+    const debug = true;
+    function log(message, data = null) {
+        if (debug) {
+            if (data) {
+                console.log(`[App] ${message}`, data);
+            } else {
+                console.log(`[App] ${message}`);
+            }
+        }
+    }
 
     // Initialize hour and minute selectors
     initTimeSelectors();
+    
+    // Update UI to show authentication status 
+    updateAuthStatus();
 
     // Check if GitHub token exists
     if (!githubManager.isAuthenticated()) {
+        log('No GitHub token found, showing token modal');
         tokenModal.classList.add('active');
-    }
-
-    // Token submission
-    submitToken.addEventListener('click', () => {
-        const token = githubToken.value.trim();
-        if (token) {
-            githubManager.setToken(token);
-            tokenModal.classList.remove('active');
-            initializeApp();
-        } else {
-            showStatus('Please enter a valid token', true);
-        }
-    });
-
-    // Initialize the app if token exists, otherwise wait for token submission
-    if (githubManager.isAuthenticated()) {
+    } else {
+        log('GitHub token found, initializing app');
         initializeApp();
     }
 
-    // App initialization function
-    async function initializeApp() {
-        // Set minimum date to today
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        scheduleDate.min = `${year}-${month}-${day}`;
-        scheduleDate.value = `${year}-${month}-${day}`;
-
-        // Set current hour and minute values (rounded to nearest 10 min)
-        const currentHour = now.getHours();
-        const currentMinute = Math.ceil(now.getMinutes() / 10) * 10;
-        hourSelect.value = currentHour;
-        minuteSelect.value = currentMinute >= 60 ? 0 : currentMinute;
-        
-        // If minutes rounded to next hour, increment hour
-        if (currentMinute >= 60) {
-            hourSelect.value = (currentHour + 1) % 24;
+    // Token submission
+    submitToken.addEventListener('click', async () => {
+        const token = githubToken.value.trim();
+        if (!token) {
+            showStatus('Please enter a valid token', true);
+            return;
         }
 
-        // Update hidden datetime field when any time component changes
-        scheduleDate.addEventListener('change', updateDateTime);
-        hourSelect.addEventListener('change', updateDateTime);
-        minuteSelect.addEventListener('change', updateDateTime);
+        showStatus('Validating token...', false);
         
-        // Initialize the scheduler
         try {
-            await scheduler.init();
-            renderMessages();
+            // This validates the token and repository access
+            const valid = await githubManager.setToken(token);
+            
+            if (valid) {
+                log('Token validation successful');
+                tokenModal.classList.remove('active');
+                updateAuthStatus();
+                initializeApp();
+                showStatus('GitHub authentication successful!');
+            } else {
+                log('Token validation failed');
+                showStatus('Invalid token or insufficient permissions', true);
+            }
         } catch (error) {
-            showStatus('Failed to initialize: Token may be invalid', true);
-            tokenModal.classList.add('active');
+            log('Token validation error', error);
+            showStatus(`Authentication error: ${error.message}`, true);
         }
-    }
+    });
 
     // Event listeners
     scheduleBtn.addEventListener('click', async () => {
@@ -99,40 +103,183 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         try {
+            scheduleBtn.disabled = true;
+            scheduleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scheduling...';
+            
             await scheduler.scheduleMessage(content, new Date(timeValue).toISOString());
+            
             messageContent.value = '';
             renderMessages();
             showStatus('Message scheduled successfully!');
         } catch (error) {
+            log('Error scheduling message', error);
+            
             if (!githubManager.isAuthenticated()) {
                 showStatus('GitHub token required or invalid', true);
                 tokenModal.classList.add('active');
             } else {
                 showStatus(`Failed to schedule message: ${error.message}`, true);
             }
+        } finally {
+            scheduleBtn.disabled = false;
+            scheduleBtn.innerHTML = '<i class="far fa-paper-plane"></i> Schedule Message';
         }
     });
 
+    // Event listeners
     document.addEventListener('messageSent', (event) => {
+        log('Message sent event received', event.detail);
         renderMessages();
         showStatus(`Message sent successfully at ${formatTime(new Date())}`);
     });
 
     document.addEventListener('messageError', (event) => {
+        log('Message error event received', event.detail);
         showStatus(`Failed to send message: ${event.detail.error.message}`, true);
     });
 
     document.addEventListener('saveError', (event) => {
+        log('Save error event received', event.detail);
         showStatus(`Failed to save message: ${event.detail.error.message}`, true);
     });
 
-    // Listen for messages updated event
     document.addEventListener('messagesUpdated', (event) => {
+        log('Messages updated event received', { count: event.detail.messages.length });
+        renderMessages();
+    });
+    
+    document.addEventListener('messageScheduled', (event) => {
+        log('Message scheduled event received', event.detail);
+        renderMessages();
+    });
+    
+    document.addEventListener('messageDeleted', (event) => {
+        log('Message deleted event received', event.detail);
         renderMessages();
     });
 
-    // Initialize time selectors
+    /**
+     * Initialize the application
+     */
+    async function initializeApp() {
+        log('Initializing application');
+        
+        // Update UI to show we're logged in
+        updateAuthStatus();
+        
+        // Set minimum date to today
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        scheduleDate.min = `${year}-${month}-${day}`;
+        scheduleDate.value = `${year}-${month}-${day}`;
+
+        // Set current hour and minute values (rounded to nearest 10 min)
+        const currentHour = now.getHours();
+        const currentMinute = Math.ceil(now.getMinutes() / 10) * 10;
+        hourSelect.value = currentHour;
+        minuteSelect.value = currentMinute >= 60 ? 0 : currentMinute;
+        
+        // If minutes rounded to next hour, increment hour
+        if (currentMinute >= 60) {
+            hourSelect.value = (currentHour + 1) % 24;
+        }
+
+        // Update hidden datetime field
+        updateDateTime();
+
+        // Set up event listeners for date/time changes
+        scheduleDate.addEventListener('change', updateDateTime);
+        hourSelect.addEventListener('change', updateDateTime);
+        minuteSelect.addEventListener('change', updateDateTime);
+        
+        // Initialize the scheduler
+        try {
+            showStatus('Connecting to GitHub...');
+            await scheduler.init();
+            renderMessages();
+            showStatus('Ready to schedule messages!');
+        } catch (error) {
+            log('Failed to initialize scheduler', error);
+            showStatus('Failed to initialize: Token may be invalid', true);
+            tokenModal.classList.add('active');
+        }
+    }
+
+    /**
+     * Update authentication status display
+     */
+    function updateAuthStatus() {
+        if (githubManager.isAuthenticated()) {
+            const credentials = githubManager.getCredentials();
+            const username = credentials.user || 'authenticated';
+            
+            if (loginStatus) {
+                loginStatus.innerHTML = `
+                    <i class="fas fa-check-circle"></i>
+                    Logged in as <strong>${username}</strong>
+                    <button id="logout-btn" class="text-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                `;
+                
+                // Add logout button functionality
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    githubManager.clearData();
+                    updateAuthStatus();
+                    tokenModal.classList.add('active');
+                    showStatus('Logged out successfully');
+                });
+            }
+            
+            // Update the compose card to show we can add messages
+            if (scheduleHeader) {
+                scheduleHeader.innerHTML = '<i class="far fa-calendar-plus"></i> Create Schedule';
+            }
+            
+            // Enable the schedule button
+            if (scheduleBtn) {
+                scheduleBtn.disabled = false;
+            }
+        } else {
+            if (loginStatus) {
+                loginStatus.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i>
+                    Not logged in
+                    <button id="login-btn" class="text-btn">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                `;
+                
+                // Add login button functionality
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    tokenModal.classList.add('active');
+                });
+            }
+            
+            // Update the compose card to show auth required
+            if (scheduleHeader) {
+                scheduleHeader.innerHTML = '<i class="fas fa-lock"></i> Authentication Required';
+            }
+            
+            // Disable the schedule button
+            if (scheduleBtn) {
+                scheduleBtn.disabled = true;
+            }
+        }
+    }
+
+    /**
+     * Initialize time selectors
+     */
     function initTimeSelectors() {
+        log('Initializing time selectors');
+        
+        // Clear existing options
+        hourSelect.innerHTML = '';
+        minuteSelect.innerHTML = '';
+        
         // Add hours (0-23)
         for (let i = 0; i < 24; i++) {
             const option = document.createElement('option');
@@ -150,18 +297,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Update the hidden datetime field with selected values
+    /**
+     * Update the hidden datetime field with selected values
+     */
     function updateDateTime() {
         const dateValue = scheduleDate.value;
-        const hourValue = hourSelect.value.padStart(2, '0');
-        const minuteValue = minuteSelect.value.padStart(2, '0');
+        const hourValue = hourSelect.value.toString().padStart(2, '0');
+        const minuteValue = minuteSelect.value.toString().padStart(2, '0');
         
         if (dateValue) {
             scheduleTimeHidden.value = `${dateValue}T${hourValue}:${minuteValue}:00`;
+            log('Updated datetime value', scheduleTimeHidden.value);
         }
     }
 
-    // Format date in 24-hour format
+    /**
+     * Format date in 24-hour format
+     * @param {Date} date - Date to format
+     * @returns {string} Formatted time
+     */
     function formatTime(date) {
         return date.toLocaleTimeString('en-GB', { 
             hour: '2-digit', 
@@ -170,7 +324,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Format full date with 24-hour time
+    /**
+     * Format full date with 24-hour time
+     * @param {Date} date - Date to format
+     * @returns {string} Formatted date and time
+     */
     function formatDateTime(date) {
         return date.toLocaleDateString('en-GB', {
             year: 'numeric',
@@ -182,6 +340,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    /**
+     * Render the message list
+     */
     async function renderMessages() {
         const messages = scheduler.getAllMessages();
         messageList.innerHTML = '';
@@ -191,8 +352,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         
+        // Sort by scheduled time
         messages.sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime));
         
+        // Render each message
         messages.forEach(message => {
             const messageEl = document.createElement('div');
             messageEl.className = 'message-item';
@@ -201,7 +364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isPastDue = scheduledDate <= new Date();
             
             messageEl.innerHTML = `
-                <div class="message-content">${message.content}</div>
+                <div class="message-content">${escape(message.content)}</div>
                 <div class="message-schedule">
                     <span>Scheduled for: ${formatDateTime(scheduledDate)}</span>
                     ${isPastDue ? '<span class="pending-badge">Sending soon</span>' : ''}
@@ -217,20 +380,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Add event listeners to delete buttons
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                await scheduler.deleteMessage(id);
-                renderMessages();
-                showStatus('Message deleted');
+                try {
+                    const id = btn.getAttribute('data-id');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    
+                    await scheduler.deleteMessage(id);
+                    renderMessages();
+                    showStatus('Message deleted');
+                } catch (error) {
+                    log('Error deleting message', error);
+                    showStatus(`Failed to delete message: ${error.message}`, true);
+                }
             });
         });
     }
 
+    /**
+     * Show a status message
+     * @param {string} message - Message to show
+     * @param {boolean} isError - Whether this is an error message
+     */
     function showStatus(message, isError = false) {
+        log(`Status update: ${message}`, { isError });
+        
         statusIndicator.textContent = message;
         statusIndicator.className = isError ? 'status-error' : 'status-active';
         
         setTimeout(() => {
             statusIndicator.className = '';
         }, 3000);
+    }
+    
+    /**
+     * Escape HTML to prevent XSS
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped text
+     */
+    function escape(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 });
