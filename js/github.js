@@ -91,9 +91,11 @@ class GitHubManager {
             console.log('Token length:', this.token.length);
             console.log('First few characters:', this.token.substring(0, 4) + '...');
             
-            // Check user info
+            // Check user info with mode: 'cors'
             const userResponse = await fetch('https://api.github.com/user', {
-                headers: headers
+                method: 'GET',
+                headers: headers,
+                mode: 'cors' // Add this line
             });
             
             if (!userResponse.ok) {
@@ -183,6 +185,7 @@ class GitHubManager {
             }
         }
         
+        // Simplified headers - removed Cache-Control which causes CORS issues
         const headers = {
             'Authorization': `token ${safeToken}`,
             'Accept': 'application/vnd.github.v3+json'
@@ -346,6 +349,11 @@ class GitHubManager {
      * @returns {Promise<Response>} Fetch response
      */
     async fetchWithRetry(url, options, retries = 3) {
+        // Add mode: 'cors' if not present
+        if (!options.mode) {
+            options.mode = 'cors';
+        }
+        
         let lastError;
         
         for (let i = 0; i < retries; i++) {
