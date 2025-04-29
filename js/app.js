@@ -181,18 +181,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
             
-            // Add timestamp
-            embed.timestamp = new Date().toISOString();
-            
-            // Add embed to message if it has content
             if (hasEmbedContent) {
                 messageData.embeds = [embed];
             } else if (!content) {
-                // If no content and no embed content, force a description
                 messageData.embeds = [{
                     description: "No content provided",
-                    color: parseInt(embedColor.value.substring(1), 16),
-                    timestamp: new Date().toISOString()
+                    color: parseInt(embedColor.value.substring(1), 16)
                 }];
             }
             
@@ -649,7 +643,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             embedFields.appendChild(fieldRow);
             
-            // Add remove button functionality
             fieldRow.querySelector('.remove-field').addEventListener('click', () => {
                 fieldRow.remove();
             });
