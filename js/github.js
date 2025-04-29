@@ -30,7 +30,12 @@ class GitHubManager {
     async setToken(token) {
         if (!token) return false;
         
-        this.token = token.trim();
+        // Sanitize token to remove any non-ASCII characters (like zero-width spaces)
+        const sanitizedToken = this.sanitizeToken(token);
+        console.log('Original token length:', token.length);
+        console.log('Sanitized token length:', sanitizedToken.length);
+        
+        this.token = sanitizedToken;
         localStorage.setItem('ghub_token', this.token);
         this.log('Token set and saved to localStorage');
         
@@ -50,14 +55,30 @@ class GitHubManager {
     }
 
     /**
+     * Remove non-ASCII characters from token
+     * @param {string} token - Token to sanitize
+     * @returns {string} Sanitized token
+     */
+    sanitizeToken(token) {
+        // Remove all non-ASCII characters (keep only chars 0-127)
+        return token.replace(/[^\x00-\x7F]/g, '');
+    }
+
+    /**
      * Validate token by making a test request to GitHub API
      * @returns {Promise<boolean>} Whether token is valid
      */
     async validateToken() {
         try {
+            // Log what's actually being sent (safely)
+            const headers = this.createHeaders();
+            console.log('Authorization header present:', !!headers.Authorization);
+            console.log('Token length:', this.token.length);
+            console.log('First few characters:', this.token.substring(0, 4) + '...');
+            
             // Check user info
             const userResponse = await fetch('https://api.github.com/user', {
-                headers: this.createHeaders()
+                headers: headers
             });
             
             if (!userResponse.ok) {
