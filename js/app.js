@@ -11,40 +11,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     const scheduleBtn = document.getElementById('schedule-message');
     const messageList = document.getElementById('message-list');
     const statusIndicator = document.getElementById('status-indicator');
+    const tokenModal = document.getElementById('token-modal');
+    const githubToken = document.getElementById('github-token');
+    const submitToken = document.getElementById('submit-token');
 
     // Initialize hour and minute selectors
     initTimeSelectors();
 
-    // Set minimum date to today
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    scheduleDate.min = `${year}-${month}-${day}`;
-    scheduleDate.value = `${year}-${month}-${day}`;
-
-    // Set current hour and minute values (rounded to nearest 10 min)
-    const currentHour = now.getHours();
-    const currentMinute = Math.ceil(now.getMinutes() / 10) * 10;
-    hourSelect.value = currentHour;
-    minuteSelect.value = currentMinute >= 60 ? 0 : currentMinute;
-    
-    // If minutes rounded to next hour, increment hour
-    if (currentMinute >= 60) {
-        hourSelect.value = (currentHour + 1) % 24;
+    // Check if GitHub token exists
+    if (!githubManager.isAuthenticated()) {
+        tokenModal.classList.add('active');
     }
 
-    // Update hidden datetime field when any time component changes
-    scheduleDate.addEventListener('change', updateDateTime);
-    hourSelect.addEventListener('change', updateDateTime);
-    minuteSelect.addEventListener('change', updateDateTime);
-    
-    // Initialize the scheduler
-    await scheduler.init();
-    renderMessages();
+    // Token submission
+    submitToken.addEventListener('click', () => {
+        const token = githubToken.value.trim();
+        if (token) {
+            githubManager.setToken(token);
+            tokenModal.classList.remove('active');
+            initializeApp();
+        } else {
+            showStatus('Please enter a valid token', true);
+        }
+    });
+
+    // Initialize the app if token exists, otherwise wait for token submission
+    if (githubManager.isAuthenticated()) {
+        initializeApp();
+    }
+
+    // App initialization function
+    async function initializeApp() {
+        // Set minimum date to today
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        scheduleDate.min = `${year}-${month}-${day}`;
+        scheduleDate.value = `${year}-${month}-${day}`;
+
+        // Set current hour and minute values (rounded to nearest 10 min)
+        const currentHour = now.getHours();
+        const currentMinute = Math.ceil(now.getMinutes() / 10) * 10;
+        hourSelect.value = currentHour;
+        minuteSelect.value = currentMinute >= 60 ? 0 : currentMinute;
+        
+        // If minutes rounded to next hour, increment hour
+        if (currentMinute >= 60) {
+            hourSelect.value = (currentHour + 1) % 24;
+        }
+
+        // Update hidden datetime field when any time component changes
+        scheduleDate.addEventListener('change', updateDateTime);
+        hourSelect.addEventListener('change', updateDateTime);
+        minuteSelect.addEventListener('change', updateDateTime);
+        
+        // Initialize the scheduler
+        try {
+            await scheduler.init();
+            renderMessages();
+        } catch (error) {
+            showStatus('Failed to initialize: Token may be invalid', true);
+            tokenModal.classList.add('active');
+        }
+    }
 
     // Event listeners
     scheduleBtn.addEventListener('click', async () => {
+        if (!githubManager.isAuthenticated()) {
+            showStatus('GitHub token required', true);
+            tokenModal.classList.add('active');
+            return;
+        }
+
         const content = messageContent.value.trim();
         updateDateTime(); // Ensure the hidden field has the latest value
         const timeValue = scheduleTimeHidden.value;
@@ -65,7 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderMessages();
             showStatus('Message scheduled successfully!');
         } catch (error) {
-            showStatus(`Failed to schedule message: ${error.message}`, true);
+            if (!githubManager.isAuthenticated()) {
+                showStatus('GitHub token required or invalid', true);
+                tokenModal.classList.add('active');
+            } else {
+                showStatus(`Failed to schedule message: ${error.message}`, true);
+            }
         }
     });
 

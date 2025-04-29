@@ -1,12 +1,16 @@
 class GitHubManager {
     constructor() {
-        // Hardcoded credentials - replace with your own values
-        this.token = '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';
+        this.token = sessionStorage.getItem('github_token') || '';
         this.repo = 'Steinzu/discordScheduler';
     }
 
     isAuthenticated() {
-        return true; // Always authenticated since we hardcoded the credentials
+        return !!this.token;
+    }
+
+    setToken(token) {
+        this.token = token;
+        sessionStorage.setItem('github_token', token);
     }
 
     getCredentials() {
