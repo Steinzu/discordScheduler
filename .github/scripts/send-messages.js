@@ -4,6 +4,8 @@ const axios = require('axios');
 
 // Get the Discord webhook URL from the environment variable
 const webhookUrl = process.env.WEBHOOK_URL;
+const githubToken = process.env.GITHUB_TOKEN;
+const repo = process.env.GITHUB_REPOSITORY;
 
 if (!webhookUrl) {
   console.error('DISCORD_WEBHOOK_URL environment variable not set');
@@ -29,11 +31,11 @@ try {
   process.exit(1);
 }
 
-// Get unsent messages that are scheduled for now or earlier
+// Get messages that are scheduled for now or earlier
 const now = new Date();
 const messages = messagesData.messages || [];
 const messagesToSend = messages.filter(message => 
-  !message.sent && new Date(message.scheduledTime) <= now
+  new Date(message.scheduledTime) <= now
 );
 
 console.log(`Found ${messagesToSend.length} messages to send`);
@@ -54,16 +56,69 @@ async function sendMessage(message) {
 
 // Process all messages that need to be sent
 async function processMessages() {
+  let messagesSent = false;
+  
   for (const message of messagesToSend) {
     const success = await sendMessage(message);
     if (success) {
-      // Mark message as sent
-      message.sent = true;
+      // Remove message from the array (don't just mark as sent)
+      const index = messages.findIndex(m => m.id === message.id);
+      if (index !== -1) {
+        messages.splice(index, 1);
+        messagesSent = true;
+      }
     }
   }
 
-  // Save the updated messages back to the file
-  fs.writeFileSync(messagesPath, JSON.stringify({ messages }, null, 2));
+  // Save the updated messages back to the file only if changes were made
+  if (messagesSent) {
+    fs.writeFileSync(messagesPath, JSON.stringify({ messages }, null, 2));
+    
+    // If using GitHub token, commit the changes
+    if (githubToken && repo) {
+      await commitChanges();
+    }
+  }
+}
+
+// Commit changes to the repository
+async function commitChanges() {
+  try {
+    const fileContent = fs.readFileSync(messagesPath, 'utf8');
+    const content = Buffer.from(fileContent).toString('base64');
+    
+    // Get current file info to obtain the SHA
+    const fileInfoResponse = await axios.get(
+      `https://api.github.com/repos/${repo}/contents/data/messages.json`,
+      {
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      }
+    );
+    
+    // Update the file
+    await axios.put(
+      `https://api.github.com/repos/${repo}/contents/data/messages.json`,
+      {
+        message: 'Remove sent messages',
+        content,
+        sha: fileInfoResponse.data.sha,
+        branch: 'gh-pages'
+      },
+      {
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      }
+    );
+    
+    console.log('Successfully committed changes to GitHub');
+  } catch (error) {
+    console.error('Error committing changes:', error.response?.data || error.message);
+  }
 }
 
 // Run the process

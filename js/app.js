@@ -126,6 +126,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         showStatus(`Failed to save message: ${event.detail.error.message}`, true);
     });
 
+    // Listen for messages updated event
+    document.addEventListener('messagesUpdated', (event) => {
+        renderMessages();
+    });
+
     // Initialize time selectors
     function initTimeSelectors() {
         // Add hours (0-23)
@@ -193,12 +198,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             messageEl.className = 'message-item';
             
             const scheduledDate = new Date(message.scheduledTime);
+            const isPastDue = scheduledDate <= new Date();
             
             messageEl.innerHTML = `
                 <div class="message-content">${message.content}</div>
                 <div class="message-schedule">
                     <span>Scheduled for: ${formatDateTime(scheduledDate)}</span>
-                    ${message.sent ? '<span class="sent-badge">Sent</span>' : ''}
+                    ${isPastDue ? '<span class="pending-badge">Sending soon</span>' : ''}
                 </div>
                 <div class="message-actions">
                     <button class="delete-btn" data-id="${message.id}">Delete</button>

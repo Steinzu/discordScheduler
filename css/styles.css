@@ -306,6 +306,15 @@ select {
     border-radius: 100px;
 }
 
+.pending-badge {
+    background-color: var(--discord-warning);
+    color: black;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 100px;
+}
+
 .message-actions {
     display: flex;
     justify-content: flex-end;
