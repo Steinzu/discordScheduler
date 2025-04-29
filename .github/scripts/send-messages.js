@@ -4,7 +4,7 @@ const axios = require('axios');
 
 // Get the Discord webhook URL from the environment variable
 const webhookUrl = process.env.WEBHOOK_URL;
-const githubToken = process.env.GITHUB_TOKEN;
+const githubToken = process.env.GHUB_TOKEN;
 const repo = process.env.GITHUB_REPOSITORY;
 
 if (!webhookUrl) {

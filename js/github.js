@@ -1,6 +1,6 @@
 class GitHubManager {
     constructor() {
-        this.token = sessionStorage.getItem('github_token') || '';
+        this.token = sessionStorage.getItem('ghub_token') || '';
         this.repo = 'Steinzu/discordScheduler';
         this.cacheBuster = Date.now(); // Prevent caching issues
     }
@@ -11,7 +11,7 @@ class GitHubManager {
 
     setToken(token) {
         this.token = token;
-        sessionStorage.setItem('github_token', token);
+        sessionStorage.setItem('ghub_token', token);
     }
 
     getCredentials() {

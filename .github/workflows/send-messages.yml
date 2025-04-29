@@ -27,4 +27,4 @@ jobs:
           node .github/scripts/send-messages.js
         env:
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
