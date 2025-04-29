@@ -1,7 +1,7 @@
 class GitHubManager {
     constructor() {
         // Hardcoded credentials - replace with your own values
-        this.token = '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';
+        this.token = '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';
         this.repo = 'Steinzu/discordScheduler';
     }
 
