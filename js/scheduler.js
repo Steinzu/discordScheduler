@@ -180,13 +180,12 @@ class MessageScheduler {
      * @returns {Promise<void>}
      */
     async checkScheduledMessages() {
-        if (!this.githubManager.isAuthenticated() || !this.webhook.getWebhookUrl()) {
-            this.log('Not authenticated or no webhook URL, skipping message check');
+        if (!this.githubManager.isAuthenticated()) {
+            this.log('Not authenticated, skipping message check');
             return;
         }
         
         try {
-            // First refresh to get latest state from GitHub
             await this.refreshMessages();
             
             const now = new Date();
@@ -198,49 +197,15 @@ class MessageScheduler {
                 return;
             }
             
-            // IMPORTANT FIX: Refresh messages again to make sure they weren't sent by GitHub Actions
-            // This prevents duplicate messages when browser reconnects after GitHub Actions already processed them
-            await this.refreshMessages();
-            
-            // Re-filter after refreshing to avoid duplicates
-            const stillExistingMessages = [];
+            this.log(`Found ${messagesToSend.length} messages due for sending`);
+
             for (const message of messagesToSend) {
-                // Check if message still exists after the refresh
-                if (this.messages.some(m => m.id === message.id)) {
-                    stillExistingMessages.push(message);
-                } else {
-                    this.log(`Message ${message.id} was already processed by GitHub Actions, skipping`);
-                }
+                this.log(`Message ${message.id} pending delivery via GitHub Actions`);
+                this.triggerEvent('messagePending', { messageId: message.id });
             }
+
+            this.triggerEvent('pendingMessagesUpdated', { messages: messagesToSend });
             
-            if (stillExistingMessages.length === 0) {
-                this.log('No messages to send after verification');
-                return;
-            }
-            
-            this.log(`Found ${stillExistingMessages.length} messages to send after verification`);
-            let saveRequired = false;
-            
-            for (const message of stillExistingMessages) {
-                try {
-                    this.log(`Sending message: ${message.id}`);
-                    await this.webhook.sendMessage(message.messageData);
-                    
-                    this.messages = this.messages.filter(msg => msg.id !== message.id);
-                    saveRequired = true;
-                    
-                    this.triggerEvent('messageSent', { messageId: message.id });
-                    this.log(`Message ${message.id} sent successfully`);
-                    
-                } catch (error) {
-                    this.logError(`Error sending message ${message.id}`, error);
-                    this.triggerEvent('messageError', { messageId: message.id, error });
-                }
-            }
-            
-            if (saveRequired) {
-                await this.saveMessages();
-            }
         } catch (error) {
             this.logError('Error checking scheduled messages', error);
         }
