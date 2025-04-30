@@ -71,19 +71,15 @@ class DiscordWebhook {
             throw new Error('No webhook URL set');
         }
         
-        // Prepare the payload based on the content type
         let payload;
         if (typeof content === 'string') {
-            // Simple text message
             if (!content.trim()) {
                 throw new Error('Cannot send an empty message');
             }
             payload = { content };
         } else if (typeof content === 'object') {
-            // Advanced message object
             payload = content;
             
-            // Remove any timestamp from embeds to prevent "Today at XX:XX" display
             if (payload.embeds && payload.embeds.length > 0) {
                 for (const embed of payload.embeds) {
                     if (embed.timestamp) {
@@ -92,7 +88,6 @@ class DiscordWebhook {
                 }
             }
             
-            // Validate that the message has content
             if (!payload.content?.trim() && 
                 (!payload.embeds || 
                  payload.embeds.length === 0 || 
@@ -114,7 +109,7 @@ class DiscordWebhook {
                 const response = await fetch(this.webhookUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json; charset=utf-8',
                     },
                     body: JSON.stringify(payload)
                 });

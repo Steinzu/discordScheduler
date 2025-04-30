@@ -66,7 +66,12 @@ async function sendMessage(message) {
       return false;
     }
     
-    const response = await axios.post(webhookUrl, payload);
+    const response = await axios.post(webhookUrl, payload, {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      }
+    });
+    
     console.log(`Sent message ID: ${message.id}`);
     return true;
   } catch (error) {
@@ -80,14 +85,12 @@ async function sendMessage(message) {
   }
 }
 
-// Process all messages that need to be sent
 async function processMessages() {
   let messagesSent = false;
   
   for (const message of messagesToSend) {
     const success = await sendMessage(message);
     if (success) {
-      // Remove message from the array (don't just mark as sent)
       const index = messages.findIndex(m => m.id === message.id);
       if (index !== -1) {
         messages.splice(index, 1);
@@ -96,24 +99,20 @@ async function processMessages() {
     }
   }
 
-  // Save the updated messages back to the file only if changes were made
   if (messagesSent) {
     fs.writeFileSync(messagesPath, JSON.stringify({ messages }, null, 2));
-    
-    // If using GitHub token, commit the changes
+
     if (githubToken && repo) {
       await commitChanges();
     }
   }
 }
 
-// Commit changes to the repository
 async function commitChanges() {
   try {
     const fileContent = fs.readFileSync(messagesPath, 'utf8');
     const content = Buffer.from(fileContent).toString('base64');
     
-    // Get current file info to obtain the SHA
     const fileInfoResponse = await axios.get(
       `https://api.github.com/repos/${repo}/contents/data/messages.json`,
       {
@@ -123,8 +122,7 @@ async function commitChanges() {
         }
       }
     );
-    
-    // Update the file
+
     await axios.put(
       `https://api.github.com/repos/${repo}/contents/data/messages.json`,
       {
@@ -147,7 +145,6 @@ async function commitChanges() {
   }
 }
 
-// Run the process
 processMessages()
   .then(() => console.log('Finished processing messages'))
   .catch(error => console.error('Error processing messages:', error));

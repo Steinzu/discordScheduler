@@ -213,12 +213,27 @@ class GitHubManager {
             }
 
             const data = await response.json();
-            const content = atob(data.content);
-            const messagesData = JSON.parse(content);
-            this.lastSha = data.sha;
             
-            this.log(`Successfully fetched ${messagesData.messages?.length || 0} messages`);
-            return messagesData.messages || [];
+            // Fix: Properly decode the Base64 content with UTF-8 support
+            const base64 = data.content.replace(/\n/g, '');
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const decodedContent = new TextDecoder('utf-8').decode(bytes);
+            
+            try {
+                const messagesData = JSON.parse(decodedContent);
+                this.lastSha = data.sha;
+                
+                this.log(`Successfully fetched ${messagesData.messages?.length || 0} messages`);
+                return messagesData.messages || [];
+            } catch (parseError) {
+                this.logError('Error parsing messages JSON', parseError);
+                this.logError('Raw content:', decodedContent);
+                throw new Error('Invalid JSON in messages file');
+            }
         } catch (error) {
             this.logError('Error fetching messages', error);
             
@@ -260,7 +275,14 @@ class GitHubManager {
             await this.ensureDataDirectoryExists();
             
             const content = JSON.stringify({ messages: messages }, null, 2);
-            const encodedContent = btoa(unescape(encodeURIComponent(content)));
+            
+            const encodedContent = btoa(
+                new Uint8Array(
+                    [...unescape(encodeURIComponent(content))]
+                    .map(c => c.charCodeAt(0))
+                )
+                .reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
             
             if (!this.lastSha) {
                 await this.getMessageFileSha();
