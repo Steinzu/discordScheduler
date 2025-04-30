@@ -1,21 +1,3 @@
 {
-  "messages": [
-    {
-      "id": "1746045336619",
-      "messageData": {
-        "embeds": [
-          {
-            "title": "Test",
-            "description": "Test",
-            "color": 5793266,
-            "author": {
-              "name": "Test"
-            }
-          }
-        ]
-      },
-      "scheduledTime": "2025-04-30T20:40:00.000Z",
-      "created": "2025-04-30T20:35:36.619Z"
-    }
-  ]
+  "messages": []
 }
