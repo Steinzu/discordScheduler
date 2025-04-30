@@ -1,6 +1,6 @@
 class DiscordWebhook {
     constructor() {
-        this.webhookUrl = 'https://discord.com/api/webhooks/1366721932980125696/JkxU-96B0XKTD-m9bFFIcwD_EcxYsCHGFeOdkRCt7qsWilsatChzvAC8qXBzRWzadt9u';
+        this.webhookUrl = '';
         this.debug = true;
     }
 
