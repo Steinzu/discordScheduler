@@ -1,3 +1,18 @@
 {
-  "messages": []
+  "messages": [
+    {
+      "id": "1746201714004",
+      "messageData": {
+        "embeds": [
+          {
+            "title": "Les wombats font des crottes en forme de cubes",
+            "description": "A cause de différences de pression exercée par leurs intestins durant leur digestion, les wombats produisent des crottes en forme de cubes, ce qui leur pemettrait de les empiler plus facilement au niveau de leur rectum, et de ainsi réduire la fréquence à laquelle ils défèquent",
+            "color": 5793266
+          }
+        ]
+      },
+      "scheduledTime": "2025-05-02T16:00:00.000Z",
+      "created": "2025-05-02T16:01:54.004Z"
+    }
+  ]
 }
