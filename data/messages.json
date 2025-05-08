@@ -1,24 +1,3 @@
 {
-  "messages": [
-    {
-      "id": "1746691889408",
-      "messageData": {
-        "embeds": [
-          {
-            "title": "Testerhre",
-            "description": "feiugjfzerth",
-            "color": 5793266,
-            "author": {
-              "name": "rege"
-            },
-            "footer": {
-              "text": "opj"
-            }
-          }
-        ]
-      },
-      "scheduledTime": "2025-05-08T08:30:00.000Z",
-      "created": "2025-05-08T08:11:29.408Z"
-    }
-  ]
+  "messages": []
 }
