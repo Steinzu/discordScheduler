@@ -1,21 +1,3 @@
 {
-  "messages": [
-    {
-      "id": "1746864802520",
-      "messageData": {
-        "embeds": [
-          {
-            "title": "Les fils automatiques !",
-            "description": "Sachez-vous que maintenant le sacheur vous permet de discuter au sujet d'un sachoir ?",
-            "color": 5793266,
-            "footer": {
-              "text": "ʏ'ᴀ ᴍᴏʏᴇɴ ǫᴜᴇ çᴀ ᴍᴀʀᴄʜᴇ ᴘᴀs"
-            }
-          }
-        ]
-      },
-      "scheduledTime": "2025-05-10T08:10:00.000Z",
-      "created": "2025-05-10T08:13:22.520Z"
-    }
-  ]
+  "messages": []
 }
