@@ -1,18 +1,3 @@
 {
-  "messages": [
-    {
-      "id": "1747046277313",
-      "messageData": {
-        "embeds": [
-          {
-            "title": "Le cycle de vie bigenerationnel des plantes",
-            "description": "Les plantes ont un cycle de vie bigénérationnel, ce qui veut dire qu'il faut 2 générations pour produire un individu identique.\nLes plantes ont donc une alternance entre deux organismes, le sporophyte, qui produit des spores, qui se développent en un gamétophyte, qui lui produit des gamètes sexuées, qui vont se féconder pour produire à nouveau un sporophyte.\nPour la plupart des plantes dites \"à graines\", la différence entre les deux stades est telle que les gamétophytes ont une durée de vie et une taille très petite comparé au sporophyte. Chez les plantes à fleurs, le gamétophyte \"mâle\" est un organisme microscopique appelé pollen et le gamétophyte \"femelle\" reste à l'intérieur du sporophyte et est appelé ovule, tandis que le sporophyte représente l'ensemble de l'appareil végétal, des racines jusqu'au feuilles et fleurs.\nCependant pour des végétaux plus \"archaïques\" comme les fougères, les mousses ou encore certaines algues, les sporophytes et gamétophytes sont bel et bien deux organismes macroscopiques distincts et très différentiables, même si l'un et l'autre ne sont que l'alternance de forme d'un même organisme.",
-            "color": 5793266
-          }
-        ]
-      },
-      "scheduledTime": "2025-05-12T11:00:00.000Z",
-      "created": "2025-05-12T10:37:57.313Z"
-    }
-  ]
+  "messages": []
 }
