@@ -1,3 +1,17 @@
 {
-  "messages": []
+  "messages": [
+    {
+      "id": "1747117796560",
+      "messageData": {
+        "embeds": [
+          {
+            "description": "L'autolyse, en boulangerie, est un processus enzymatique naturel qui se produit lorsque la farine est mélangée uniquement avec de l'eau et laissée au repos, sans ajout de levure, de sel, ou d'autres ingrédients. Ce processus déclenche l'activité de deux types d'enzymes naturellement présentes dans la farine : les protéases et les amylases.\n\nLes protéases fragmentent les chaînes de protéines (gluténine et gliadine), facilitant la formation du réseau de gluten et améliorant l'extensibilité de la pâte.\n\nLes amylases hydrolysent l'amidon en sucres simples (maltose, glucose), qui seront ensuite utilisés comme substrat énergétique par les levures lors de la fermentation.",
+            "color": 6691812
+          }
+        ]
+      },
+      "scheduledTime": "2025-05-13T07:00:00.000Z",
+      "created": "2025-05-13T06:29:56.560Z"
+    }
+  ]
 }
