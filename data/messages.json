@@ -1,3 +1,18 @@
 {
-  "messages": []
+  "messages": [
+    {
+      "id": "1747396290749",
+      "messageData": {
+        "embeds": [
+          {
+            "title": "La boulette de mammouth",
+            "description": "En 2023, une entreprise qui produit de la viande synthétique (produite en laboratoire à partir de cultures de cellules) a décidé de produire une boule de viande génétiquement modifiée, en utilisant une séquence ADN de myoglobine issue de mammouth et complétée avec des séquences d'éléphant. La myoglobine est une protéine impliquée dans les actions musculaires, et responsable de la majeure partie de la saveur de la viande.",
+            "color": 5793266
+          }
+        ]
+      },
+      "scheduledTime": "2025-05-16T12:00:00.000Z",
+      "created": "2025-05-16T11:51:30.749Z"
+    }
+  ]
 }
