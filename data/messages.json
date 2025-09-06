@@ -1,3 +1,18 @@
 {
-  "messages": []
+  "messages": [
+    {
+      "id": "1757146383068",
+      "messageData": {
+        "embeds": [
+          {
+            "title": "Pro tip",
+            "description": "Pour inciter un gecko à faire caca, il suffit de lui masser délicatement le ventre",
+            "color": 5793266
+          }
+        ]
+      },
+      "scheduledTime": "2025-09-06T08:20:00.000Z",
+      "created": "2025-09-06T08:13:03.068Z"
+    }
+  ]
 }
