@@ -15,7 +15,7 @@
                     <i class="fab fa-discord"></i>
                     <h1>Discord Scheduler</h1>
                 </div>
-                
+
                 <div id="login-status" class="auth-status">
                     <i class="fas fa-circle-notch fa-spin"></i> Checking login...
                 </div>
@@ -31,35 +31,35 @@
                                     <label for="message-content">Message Content (optional)</label>
                                     <textarea id="message-content" placeholder="This will appear above your embed..."></textarea>
                                 </div>
-                                
+
                                 <div class="embed-option">
                                     <label for="embed-title">Embed Title</label>
                                     <input type="text" id="embed-title" placeholder="Embed title">
                                 </div>
-                                
+
                                 <div class="embed-option">
                                     <label for="embed-description">Embed Description</label>
                                     <textarea id="embed-description" placeholder="Main content for your embed..." required></textarea>
                                 </div>
-                                
+
                                 <div class="embed-option">
                                     <label for="embed-color">Color</label>
                                     <input type="color" id="embed-color" value="#5865F2">
                                 </div>
                             </div>
-                            
+
                             <div class="embed-media-options">
                                 <div class="embed-option">
                                     <label for="embed-image">Image URL</label>
                                     <input type="url" id="embed-image" placeholder="https://example.com/image.png">
                                 </div>
-                                
+
                                 <div class="embed-option">
                                     <label for="embed-thumbnail">Thumbnail URL</label>
                                     <input type="url" id="embed-thumbnail" placeholder="https://example.com/thumbnail.png">
                                 </div>
                             </div>
-                            
+
                             <div class="embed-author-container">
                                 <h4>Author</h4>
                                 <div class="embed-option">
@@ -71,7 +71,7 @@
                                     <input type="url" id="author-icon" placeholder="https://example.com/author-icon.png">
                                 </div>
                             </div>
-                            
+
                             <div class="embed-footer-container">
                                 <h4>Footer</h4>
                                 <div class="embed-option">
@@ -83,7 +83,7 @@
                                     <input type="url" id="footer-icon" placeholder="https://example.com/footer-icon.png">
                                 </div>
                             </div>
-                            
+
                             <div class="embed-fields-container">
                                 <div class="embed-fields-header">
                                     <h4>Fields</h4>
@@ -95,7 +95,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="input-group">
                         <label>Schedule Date & Time</label>
                         <div class="datetime-picker">
@@ -116,7 +116,7 @@
                         </div>
                         <input type="hidden" id="schedule-time">
                     </div>
-                    
+
                     <button id="schedule-message" class="primary-btn" disabled>
                         <i class="far fa-paper-plane"></i> Schedule Message
                     </button>
@@ -135,7 +135,7 @@
     </div>
 
     <div id="status-indicator"></div>
-    
+
     <div id="token-modal" class="modal">
         <div class="modal-content">
             <h2><i class="fas fa-key"></i> GitHub Token Required</h2>
@@ -147,10 +147,11 @@
             </button>
         </div>
     </div>
-    
+
     <script src="js/webhook.js"></script>
     <script src="js/github.js"></script>
     <script src="js/scheduler.js"></script>
     <script src="js/app.js"></script>
+    test
 </body>
 </html>
